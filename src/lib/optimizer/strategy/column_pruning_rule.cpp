@@ -299,6 +299,72 @@ void try_join_to_semi_rewrite(
       join_node->right_input()->has_matching_unique_constraint(equals_predicate_expressions_right)) {
     join_node->join_mode = JoinMode::Semi;
   }
+
+  // Subquery plan requires: StoredTable (data source), Predicate Node (row filter), Projection (column filter)
+
+  const auto table_node = std::make_shared<StoredTableNode>("nation");
+  auto predicate = std::make_shared<BinaryPredicateExpression>(
+    PredicateCondition::Equals,
+    table_node->get_column("n_name"),
+    std::make_shared<ValueExpression>(AllTypeVariant("GERMANY"))
+  );
+
+  auto predicate_node = std::make_shared<PredicateNode>(predicate);
+  predicate_node->set_left_input(table_node);
+
+  auto projection_node = std::make_shared<ProjectionNode>(std::vector<std::shared_ptr<AbstractExpression>>{table_node->get_column("n_name")});
+  projection_node->set_left_input(predicate_node);
+
+  const auto old_col_expr = std::static_pointer_cast<LQPColumnExpression>(std::static_pointer_cast<BinaryPredicateExpression>(join_node->node_expressions[0])->left_operand());
+  const auto& old_col_name = old_col_expr->as_column_name();
+  const auto old_table_node = std::static_pointer_cast<const StoredTableNode>(old_col_expr->original_node.lock());
+
+  auto replacement_node = std::make_shared<PredicateNode>(
+    std::make_shared<BinaryPredicateExpression>(
+      PredicateCondition::Equals,
+      old_table_node->get_column(old_col_name),
+      // table_node->get_column("n_nationkey"),
+      std::make_shared<LQPSubqueryExpression>(projection_node, std::vector<ParameterID>{}, std::vector<std::shared_ptr<AbstractExpression>>{})
+    )
+  );
+
+  std::cout << "Before output saving" << std::endl;
+
+  auto outputs = join_node->outputs();
+  auto input_sides = join_node->get_input_sides();
+
+  std::cout << "Input Sides Length: " << input_sides.size() << std::endl;
+  std::cout << "Outputs Length: " << outputs.size() << std::endl;
+
+  /**
+   * Hold left_input ptr in extra variable to keep the ref count up and untie it from this node.
+   * left_input might be nullptr
+   */
+
+  std::cout << "Before input saving & reset" << std::endl;
+
+  auto left_input = join_node->left_input();
+  join_node->set_left_input(nullptr);
+
+  // TODO: left input of replacement node should equal left input of join node
+  // In addition, the column expression (left operator) of the replacement node's predicate should also equal that of join node
+
+  std::cout << "Before input transfer" << std::endl;
+
+  replacement_node->set_left_input(left_input);
+
+  std::cout << "Before output transfer" << std::endl;
+
+  /**
+   * Tie this node's previous outputs with this nodes previous left input
+   * If left_input is nullptr, still call set_input so this node will get untied from the LQP.
+   */
+  for (size_t output_idx = 0; output_idx < outputs.size(); ++output_idx) {
+    outputs[output_idx]->set_input(input_sides[output_idx], replacement_node);
+  }
+  
+  std::cout << "Done" << std::endl;
+
 }
 
 void prune_projection_node(

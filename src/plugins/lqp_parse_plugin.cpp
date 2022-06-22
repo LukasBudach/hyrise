@@ -82,13 +82,13 @@ namespace opossum {
 
             visit_lqp(root_node, [&](auto& node) {
                 const auto type = node->type;
+                 std::cout << "\t" << node->description() << std::endl;
+                 
                 if ((type != LQPNodeType::Join) && (type != LQPNodeType::Aggregate)) {
                     // Non-Join and Non-Aggregate (Groupby) nodes are not considered for optimization using UCCs
                     return LQPVisitation::VisitInputs;
                 }
-
-                std::cout << "\t" << node->description() << std::endl;
-
+               
                 if (type == LQPNodeType::Aggregate) {
                     // in case of aggregate, extract all predicates used in groupby operations, then try to generate UCCCandidate objects from each of them
                     auto& aggregate_node = static_cast<AggregateNode&>(*node);
