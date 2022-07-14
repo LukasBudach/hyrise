@@ -120,7 +120,7 @@ void BenchmarkRunner::run() {
     _results = std::vector<BenchmarkItemResult>{*std::max_element(items.begin(), items.end()) + 1u};
   }
 
-  // _mine_dependencies();
+  _mine_dependencies();
 
   switch (_config.benchmark_mode) {
     case BenchmarkMode::Ordered: {
@@ -202,7 +202,7 @@ void BenchmarkRunner::_mine_dependencies() {
     Assert(_currently_running_clients == 0, "All runs must be finished at this point");
   }
   _results = std::vector<BenchmarkItemResult>{*std::max_element(items.begin(), items.end()) + 1u};
-  const auto& plugin_path = "./cmake-build-debug/lib/libhyriseJoinToLocalPredicateRewritePlugin.so";
+  const auto& plugin_path = "./cmake-build-release/lib/libhyriseJoinToLocalPredicateRewritePlugin.so";
   std::cout << "- Load DependencyMiningPlugin from " << plugin_path << std::endl;
   Hyrise::get().plugin_manager.load_plugin(plugin_path);
   std::cout << "- Finished Dependency Mining" << std::endl;
