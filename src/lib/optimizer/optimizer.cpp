@@ -69,7 +69,7 @@ std::shared_ptr<Optimizer> Optimizer::create_default_optimizer() {
   // which does not like semi joins (see above).
   optimizer->add_rule(std::make_unique<ColumnPruningRule>());
 
-  optimizer->add_rule(std::make_unique<JoinToPredicateRewriteRule>());
+  // optimizer->add_rule(std::make_unique<JoinToPredicateRewriteRule>());
 
   optimizer->add_rule(std::make_unique<PredicatePlacementRule>());
 
