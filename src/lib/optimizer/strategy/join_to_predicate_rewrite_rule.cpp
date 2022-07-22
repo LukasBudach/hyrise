@@ -38,7 +38,7 @@ void JoinToPredicateRewriteRule::_apply_to_plan_without_subqueries(const std::sh
         std::shared_ptr<PredicateNode> valid_predicate = nullptr;
         const auto can_rewrite = _check_rewrite_validity(join_node, removable_side, valid_predicate);
         if (can_rewrite) {
-          // std::cout << "Will rewrite for predicate: " << valid_predicate->description() << std::endl;
+          std::cout << "Will be rewriting join " << join_node->description() << " utilizing predicate " << valid_predicate->description() << std::endl;
           rewritable_nodes.push_back(join_node);
           removable_sides.push_back(*removable_side);
           valid_predicates.push_back(valid_predicate);
