@@ -49,7 +49,7 @@ void check_and_add_unique_constraint(const std::shared_ptr<LQPColumnExpression> 
 
     resolve_data_type(table->column_data_type(col_id), [&](const auto data_type_t) {
         using ColumnDataType = typename decltype(data_type_t)::type;
-        using VectorIterator = pmr_vector<ColumnDataType>::iterator;
+        using VectorIterator = typename pmr_vector<ColumnDataType>::iterator;
 
         // We need to remember if the column contains compressed or uncompressed values.
         // For mixed compressed and uncompressed segments, we can't benefit from pre-sorted sub-vectors, so we treat these columns the same as uncompressed ones.
